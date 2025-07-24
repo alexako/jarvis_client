@@ -22,6 +22,18 @@ const formatMessageTime = (timestamp: Date | string | number): string => {
 };
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+  // Debug logging for message rendering
+  if (typeof window !== 'undefined' && (window as any).config?.app?.debug) {
+    console.log('🎨 Rendering ChatMessage:', {
+      id: message.id,
+      role: message.role,
+      content: message.content.substring(0, 50) + '...',
+      timestamp: message.timestamp,
+      status: message.status
+    });
+  }
+
+  try {
   const getStatusIcon = () => {
     switch (message.status) {
       case 'sending':
@@ -52,4 +64,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       )}
     </div>
   );
+  
+  } catch (error) {
+    console.error('🚨 ChatMessage render error:', error, 'Message:', message);
+    return (
+      <div className="message message--error">
+        <div className="message__bubble">
+          <div className="message__content">Error rendering message: {message.id}</div>
+        </div>
+      </div>
+    );
+  }
 };

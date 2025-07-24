@@ -36,7 +36,7 @@ function App() {
         console.log('  latest message:', currentChat.messages[currentChat.messages.length - 1]);
       }
     }
-  }, [currentChat, currentChatId]);
+  }, [currentChat?.messages?.length, currentChatId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -348,11 +348,28 @@ function App() {
             <div style={{fontSize: '12px', color: '#666', marginBottom: '1rem'}}>
               Debug: currentChatId={currentChatId}, currentChat exists={currentChat ? 'YES' : 'NO'}, 
               messages count={currentChat?.messages.length || 0}
+              {currentChat?.messages && (
+                <div>
+                  Last 3 message IDs: {currentChat.messages.slice(-3).map(m => `${m.role}:${m.id.slice(-4)}`).join(', ')}
+                </div>
+              )}
             </div>
           )}
-          {currentChat?.messages.map((message) => (
-            <ChatMessage key={message.id} message={message} />
-          ))}
+          {currentChat?.messages.map((message, index) => {
+            if (config.app.debug && index >= (currentChat.messages.length - 3)) {
+              console.log(`🔍 Rendering message ${index}:`, message);
+            }
+            
+            // Check for duplicate IDs
+            if (config.app.debug) {
+              const duplicates = currentChat.messages.filter(m => m.id === message.id);
+              if (duplicates.length > 1) {
+                console.warn('🚨 Duplicate message ID found:', message.id, 'Count:', duplicates.length);
+              }
+            }
+            
+            return <ChatMessage key={message.id} message={message} />;
+          })}
           {isLoading && (
             <div className="message message--assistant message--loading">
               <div className="message__bubble">
