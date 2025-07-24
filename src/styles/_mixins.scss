@@ -1,0 +1,47 @@
+@function em($pixels, $context: 12) {
+    @return #{$pixels/$context}em;
+}
+
+@mixin text-overflow() {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@mixin transition($transition) {
+    -webkit-transition: $transition;
+    -moz-transition: $transition;
+    -ms-transition: $transition;
+    -o-transition: $transition;
+    transition: $transition;
+}
+
+@mixin breakpoint($class) {
+    @if $class == xxs {
+        @media (max-width: 467px) {
+        @content;
+        }
+    } @else
+    if $class == xs {
+        @media (max-width: 767px) {
+        @content;
+        }
+    } @else
+    if $class == sm {
+        @media (min-width: 768px) {
+        @content;
+        }
+    } @else
+    if $class == md {
+        @media (min-width: 992px) {
+        @content;
+        }
+    } @else
+    if $class == lg {
+        @media (min-width: 1200px) {
+        @content;
+        }
+    } @else {
+        @warn "Breakpoint mixin supports: xs, sm, md, lg";
+    }
+}
