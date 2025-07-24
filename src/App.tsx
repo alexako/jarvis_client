@@ -25,6 +25,19 @@ function App() {
   const currentChat = chatHistories.find(chat => chat.id === currentChatId);
   const currentProviderHealth = providerHealth.find(health => health.provider === selectedProvider);
 
+  // Debug current chat state
+  useEffect(() => {
+    if (config.app.debug) {
+      console.log('🔍 Chat state changed:');
+      console.log('  currentChatId:', currentChatId);
+      console.log('  currentChat:', currentChat);
+      console.log('  currentChat messages:', currentChat?.messages?.length || 0);
+      if (currentChat?.messages?.length) {
+        console.log('  latest message:', currentChat.messages[currentChat.messages.length - 1]);
+      }
+    }
+  }, [currentChat, currentChatId]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -106,12 +119,26 @@ function App() {
   };
 
   const sendMessage = async (content: string) => {
-    if (!currentChatId) {
+    let activeChatId = currentChatId;
+    
+    if (!activeChatId) {
       if (config.app.debug) {
         console.log('📝 Creating new chat for message:', content.substring(0, 50) + '...');
       }
-      createNewChat();
-      return;
+      const newChatId = Date.now().toString();
+      const newChat: ChatHistory = {
+        id: newChatId,
+        title: 'New Chat',
+        messages: [],
+        isPrivate: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      setChatHistories((prev: ChatHistory[]) => [newChat, ...prev]);
+      setCurrentChatId(newChatId);
+      setSidebarOpen(false);
+      activeChatId = newChatId;
     }
 
     if (config.app.debug) {
@@ -127,25 +154,49 @@ function App() {
     };
 
     // Add user message
-    setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
-      if (chat.id === currentChatId) {
-        const updatedChat = {
-          ...chat,
-          title: chat.messages.length === 0 ? generateChatTitle(content) : chat.title,
-          messages: [...chat.messages, userMessage],
-          updatedAt: new Date(),
-        };
-        return updatedChat;
+    setChatHistories((prev: ChatHistory[]) => {
+      if (config.app.debug) {
+        console.log('🔍 Before adding user message:');
+        console.log('  activeChatId:', activeChatId);
+        console.log('  chatHistories length:', prev.length);
+        console.log('  current chat exists:', prev.find(c => c.id === activeChatId) ? 'YES' : 'NO');
+        console.log('  userMessage:', userMessage);
       }
-      return chat;
-    }));
+      
+      const updated = prev.map((chat: ChatHistory) => {
+        if (chat.id === activeChatId) {
+          const updatedChat = {
+            ...chat,
+            title: chat.messages.length === 0 ? generateChatTitle(content) : chat.title,
+            messages: [...chat.messages, userMessage],
+            updatedAt: new Date(),
+          };
+          
+          if (config.app.debug) {
+            console.log('🔍 Updated chat:', updatedChat);
+            console.log('  messages count:', updatedChat.messages.length);
+          }
+          
+          return updatedChat;
+        }
+        return chat;
+      });
+      
+      if (config.app.debug) {
+        console.log('🔍 After updating chat histories:', updated.length);
+        const targetChat = updated.find(c => c.id === activeChatId);
+        console.log('🔍 Target chat messages:', targetChat?.messages.length);
+      }
+      
+      return updated;
+    });
 
     setIsLoading(true);
 
     try {
       // Update user message status to 'sent'
       setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
-        if (chat.id === currentChatId) {
+        if (chat.id === activeChatId) {
           return {
             ...chat,
             messages: chat.messages.map(msg => 
@@ -164,7 +215,7 @@ function App() {
 
       // Update user message status to 'delivered'
       setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
-        if (chat.id === currentChatId) {
+        if (chat.id === activeChatId) {
           return {
             ...chat,
             messages: chat.messages.map(msg => 
@@ -184,7 +235,7 @@ function App() {
       };
 
       setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
-        if (chat.id === currentChatId) {
+        if (chat.id === activeChatId) {
           return {
             ...chat,
             messages: [...chat.messages, assistantMessage],
@@ -200,7 +251,7 @@ function App() {
 
       // Update user message status to 'error'
       setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
-        if (chat.id === currentChatId) {
+        if (chat.id === activeChatId) {
           return {
             ...chat,
             messages: chat.messages.map(msg => 
@@ -220,7 +271,7 @@ function App() {
       };
 
       setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
-        if (chat.id === currentChatId) {
+        if (chat.id === activeChatId) {
           return {
             ...chat,
             messages: [...chat.messages, errorMessage],
@@ -293,6 +344,12 @@ function App() {
         </div>
 
         <div className="messages">
+          {config.app.debug && (
+            <div style={{fontSize: '12px', color: '#666', marginBottom: '1rem'}}>
+              Debug: currentChatId={currentChatId}, currentChat exists={currentChat ? 'YES' : 'NO'}, 
+              messages count={currentChat?.messages.length || 0}
+            </div>
+          )}
           {currentChat?.messages.map((message) => (
             <ChatMessage key={message.id} message={message} />
           ))}
