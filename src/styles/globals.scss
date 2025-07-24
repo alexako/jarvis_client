@@ -80,6 +80,9 @@ a {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
   border-bottom: 1px solid $darkGrey-2;
   background-color: $background;
   width: 100%;
@@ -107,6 +110,9 @@ a {
 
   @include breakpoint(sm) {
     padding: 1rem 2rem;
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-left: max(2rem, env(safe-area-inset-left));
+    padding-right: max(2rem, env(safe-area-inset-right));
   }
 }
 
@@ -275,6 +281,9 @@ a {
 /* Chat Input */
 .chat-input {
   padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
   border-top: 1px solid $darkGrey-2;
   background-color: $background;
   flex-shrink: 0;
@@ -347,6 +356,9 @@ a {
 
   @include breakpoint(sm) {
     padding: 1rem 2rem;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(2rem, env(safe-area-inset-left));
+    padding-right: max(2rem, env(safe-area-inset-right));
   }
 }
 
@@ -415,6 +427,11 @@ a {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  
+  /* PWA safe area support */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
 
   &--open {
     transform: translateX(0);

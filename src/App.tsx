@@ -282,9 +282,13 @@ function App() {
               providerHealth={providerHealth}
               onProviderChange={setSelectedProvider}
             />
-            {currentProviderHealth && (
-              <HealthIndicator health={currentProviderHealth} />
-            )}
+            <HealthIndicator 
+              health={currentProviderHealth || {
+                provider: selectedProvider,
+                status: 'offline',
+                lastChecked: new Date(),
+              }} 
+            />
           </div>
         </div>
 
