@@ -78,17 +78,53 @@ export class JarvisAPI {
       }
 
       const data = await response.json();
-      const healthData = data.components || this.getDefaultHealthStatus();
+      
+      // Enhanced debugging for health response
+      if (config.app.debug) {
+        console.log('🔍 Raw health response:', data);
+        console.log('🔍 data.components:', data.components);
+      }
+      
+      const healthData = data.components || data;
+
+      // Map API provider keys to our internal provider names
+      const providerMapping: Record<string, AIProvider> = {
+        'ai_provider_anthropic': 'anthropic',
+        'ai_provider_deepseek': 'deepseek',
+        'ai_provider_local': 'local'
+      };
 
       // Add response time to health data
-      const healthWithTiming = Object.keys(healthData).map((key: string) => {
-        return {
-          provider: key as AIProvider,
-          status: healthData[key] ? 'healthy' : 'offline',
-          lastChecked: new Date(),
-          responseTime,
-        } as ProviderHealth;
-      });
+      const healthWithTiming: ProviderHealth[] = [];
+      
+      for (const [key, value] of Object.entries(healthData)) {
+        const provider = providerMapping[key];
+        if (provider) {
+          const isHealthy = value === true || value === 'healthy' || value?.status === 'healthy';
+          if (config.app.debug) {
+            console.log(`🔍 Processing ${key} -> ${provider}: ${value} -> ${isHealthy ? 'healthy' : 'offline'}`);
+          }
+          healthWithTiming.push({
+            provider,
+            status: isHealthy ? 'healthy' : 'offline',
+            lastChecked: new Date(),
+            responseTime,
+          });
+        }
+      }
+      
+      // Ensure we have all providers (add missing ones as offline)
+      const allProviders: AIProvider[] = ['anthropic', 'deepseek', 'local'];
+      for (const provider of allProviders) {
+        if (!healthWithTiming.find(h => h.provider === provider)) {
+          healthWithTiming.push({
+            provider,
+            status: 'offline',
+            lastChecked: new Date(),
+            responseTime,
+          });
+        }
+      }
       this.logApiResponse(endpoint, true, healthWithTiming);
       return healthWithTiming;
     } catch (error) {
