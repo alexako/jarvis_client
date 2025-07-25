@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
-import { ChatMessage } from './components/ChatMessage';
+import { ChatView } from './components/ChatView';
 import { ChatInput } from './components/ChatInput';
 import { ProviderSelector } from './components/ProviderSelector';
 import { HealthIndicator } from './components/HealthIndicator';
 import { Sidebar } from './components/Sidebar';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { useChat } from './hooks/useChat';
 import { JarvisAPI } from './services/api';
 import { config } from './config';
 import { Message, ChatHistory, AIProvider, ProviderHealth } from './types';
@@ -16,35 +17,22 @@ function App() {
   const [currentChatId, setCurrentChatId] = useLocalStorage<string | null>(config.storage.keys.currentChat, null);
   const [selectedProvider, setSelectedProvider] = useLocalStorage<AIProvider>(config.storage.keys.selectedProvider, 'anthropic');
   const [providerHealth, setProviderHealth] = useState<ProviderHealth[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 992);
   
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { chatState, addMessage, updateMessage, setLoading, clearMessages, loadMessages } = useChat();
 
   const currentChat = chatHistories.find(chat => chat.id === currentChatId);
   const currentProviderHealth = providerHealth.find(health => health.provider === selectedProvider);
 
-  // Debug current chat state
+  // Load messages when chat changes
   useEffect(() => {
-    if (config.app.debug) {
-      console.log('🔍 Chat state changed:');
-      console.log('  currentChatId:', currentChatId);
-      console.log('  currentChat:', currentChat);
-      console.log('  currentChat messages:', currentChat?.messages?.length || 0);
-      if (currentChat?.messages?.length) {
-        console.log('  latest message:', currentChat.messages[currentChat.messages.length - 1]);
-      }
+    if (currentChat?.messages) {
+      loadMessages(currentChat.messages);
+    } else {
+      clearMessages();
     }
-  }, [currentChat?.messages?.length, currentChatId]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [currentChat?.messages]);
+  }, [currentChatId, currentChat?.messages, loadMessages, clearMessages]);
 
   useEffect(() => {
     const checkHealth = async () => {
@@ -122,16 +110,9 @@ function App() {
     let activeChatId = currentChatId;
     
     if (!activeChatId) {
-      if (config.app.debug) {
-        console.log('📝 Creating new chat for message:', content.substring(0, 50) + '...');
-      }
       activeChatId = Date.now().toString();
       setCurrentChatId(activeChatId);
       setSidebarOpen(false);
-    }
-
-    if (config.app.debug) {
-      console.log(`💬 Sending message to ${selectedProvider}:`, content.substring(0, 100) + '...');
     }
 
     const userMessage: Message = {
@@ -142,71 +123,50 @@ function App() {
       status: 'sending',
     };
 
-    // Add user message - ensure we handle both existing chats and newly created chats
+    // Add user message to local chat state
+    addMessage(userMessage);
+
+    // Update chat histories for persistence
     setChatHistories((prev: ChatHistory[]) => {
-      if (config.app.debug) {
-        console.log('🔍 Before adding user message:');
-        console.log('  activeChatId:', activeChatId);
-        console.log('  chatHistories length:', prev.length);
-        console.log('  current chat exists:', prev.find(c => c.id === activeChatId) ? 'YES' : 'NO');
-        console.log('  userMessage:', userMessage);
-      }
-      
-      // If the chat doesn't exist in prev (new chat scenario), we need to ensure it's there
       let workingArray = prev;
       if (!prev.find(c => c.id === activeChatId)) {
         const newChat: ChatHistory = {
           id: activeChatId,
-          title: 'New Chat',
+          title: generateChatTitle(content),
           messages: [],
           isPrivate: false,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
         workingArray = [newChat, ...prev];
-        if (config.app.debug) {
-          console.log('🔍 Added missing chat to working array');
-        }
       }
       
-      const updated = workingArray.map((chat: ChatHistory) => {
+      return workingArray.map((chat: ChatHistory) => {
         if (chat.id === activeChatId) {
-          const updatedChat = {
+          return {
             ...chat,
             title: chat.messages.length === 0 ? generateChatTitle(content) : chat.title,
             messages: [...chat.messages, userMessage],
             updatedAt: new Date(),
           };
-          
-          if (config.app.debug) {
-            console.log('🔍 Updated chat:', updatedChat);
-            console.log('  messages count:', updatedChat.messages.length);
-          }
-          
-          return updatedChat;
         }
         return chat;
       });
-      
-      if (config.app.debug) {
-        console.log('🔍 After updating chat histories:', updated.length);
-        const targetChat = updated.find(c => c.id === activeChatId);
-        console.log('🔍 Target chat messages:', targetChat?.messages.length);
-      }
-      
-      return updated;
     });
 
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      // Update user message status to 'sent'
+      // Update user message status
+      updateMessage(userMessage.id, { status: 'sent' });
+      
+      // Update in chat histories as well
       setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
         if (chat.id === activeChatId) {
           return {
             ...chat,
             messages: chat.messages.map(msg => 
-              msg.id === userMessage.id ? { ...msg, status: 'sent' } : msg
+              msg.id === userMessage.id ? { ...msg, status: 'sent' as const } : msg
             ),
           };
         }
@@ -215,22 +175,8 @@ function App() {
 
       const response = await JarvisAPI.sendMessage(content, selectedProvider);
       
-      if (config.app.debug) {
-        console.log('🤖 Received response:', response.substring(0, 100) + '...');
-      }
-
-      // Update user message status to 'delivered'
-      setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
-        if (chat.id === activeChatId) {
-          return {
-            ...chat,
-            messages: chat.messages.map(msg => 
-              msg.id === userMessage.id ? { ...msg, status: 'delivered' } : msg
-            ),
-          };
-        }
-        return chat;
-      }));
+      // Update user message to delivered
+      updateMessage(userMessage.id, { status: 'delivered' });
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -240,33 +186,25 @@ function App() {
         status: 'delivered',
       };
 
+      // Add assistant message to local chat state
+      addMessage(assistantMessage);
+
+      // Update chat histories
       setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
         if (chat.id === activeChatId) {
           return {
             ...chat,
-            messages: [...chat.messages, assistantMessage],
+            messages: chat.messages.map(msg => 
+              msg.id === userMessage.id ? { ...msg, status: 'delivered' as const } : msg
+            ).concat(assistantMessage),
             updatedAt: new Date(),
           };
         }
         return chat;
       }));
     } catch (error) {
-      if (config.app.debug) {
-        console.error('🚨 Message send failed:', error);
-      }
-
-      // Update user message status to 'error'
-      setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
-        if (chat.id === activeChatId) {
-          return {
-            ...chat,
-            messages: chat.messages.map(msg => 
-              msg.id === userMessage.id ? { ...msg, status: 'error' } : msg
-            ),
-          };
-        }
-        return chat;
-      }));
+      // Update user message to error
+      updateMessage(userMessage.id, { status: 'error' });
 
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -276,18 +214,24 @@ function App() {
         status: 'error',
       };
 
+      // Add error message to local chat state
+      addMessage(errorMessage);
+
+      // Update chat histories
       setChatHistories((prev: ChatHistory[]) => prev.map((chat: ChatHistory) => {
         if (chat.id === activeChatId) {
           return {
             ...chat,
-            messages: [...chat.messages, errorMessage],
+            messages: chat.messages.map(msg => 
+              msg.id === userMessage.id ? { ...msg, status: 'error' as const } : msg
+            ).concat(errorMessage),
             updatedAt: new Date(),
           };
         }
         return chat;
       }));
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -349,50 +293,12 @@ function App() {
           </div>
         </div>
 
-        <div className="messages">
-          {config.app.debug && (
-            <div style={{fontSize: '12px', color: '#666', marginBottom: '1rem'}}>
-              Debug: currentChatId={currentChatId}, currentChat exists={currentChat ? 'YES' : 'NO'}, 
-              messages count={currentChat?.messages.length || 0}
-              {currentChat?.messages && (
-                <div>
-                  Last 5 message IDs: {currentChat.messages.slice(-5).map(m => `${m.role}:${m.id.slice(-4)}`).join(', ')}
-                </div>
-              )}
-              {currentChat?.messages && config.app.debug && (
-                <div>
-                  All message roles: [{currentChat.messages.map(m => m.role).join(', ')}]
-                </div>
-              )}
-            </div>
-          )}
-          {currentChat?.messages.map((message, index) => {
-            if (config.app.debug && index >= (currentChat.messages.length - 5)) {
-              console.log(`🔍 Rendering message ${index}:`, message);
-            }
-            
-            // Check for duplicate IDs
-            if (config.app.debug) {
-              const duplicates = currentChat.messages.filter(m => m.id === message.id);
-              if (duplicates.length > 1) {
-                console.warn('🚨 Duplicate message ID found:', message.id, 'Count:', duplicates.length);
-              }
-            }
-            
-            return <ChatMessage key={message.id} message={message} />;
-          })}
-          {isLoading && (
-            <div className="message message--assistant message--loading">
-              <div className="message__bubble">
-                <div className="spinner" />
-                Thinking...
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+        <ChatView 
+          messages={chatState.messages} 
+          isLoading={chatState.isLoading} 
+        />
 
-        <ChatInput onSendMessage={sendMessage} disabled={isLoading} />
+        <ChatInput onSendMessage={sendMessage} disabled={chatState.isLoading} />
       </div>
     </div>
   );
