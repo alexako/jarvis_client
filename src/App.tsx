@@ -125,20 +125,9 @@ function App() {
       if (config.app.debug) {
         console.log('📝 Creating new chat for message:', content.substring(0, 50) + '...');
       }
-      const newChatId = Date.now().toString();
-      const newChat: ChatHistory = {
-        id: newChatId,
-        title: 'New Chat',
-        messages: [],
-        isPrivate: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      
-      setChatHistories((prev: ChatHistory[]) => [newChat, ...prev]);
-      setCurrentChatId(newChatId);
+      activeChatId = Date.now().toString();
+      setCurrentChatId(activeChatId);
       setSidebarOpen(false);
-      activeChatId = newChatId;
     }
 
     if (config.app.debug) {
@@ -153,7 +142,7 @@ function App() {
       status: 'sending',
     };
 
-    // Add user message
+    // Add user message - ensure we handle both existing chats and newly created chats
     setChatHistories((prev: ChatHistory[]) => {
       if (config.app.debug) {
         console.log('🔍 Before adding user message:');
@@ -163,7 +152,24 @@ function App() {
         console.log('  userMessage:', userMessage);
       }
       
-      const updated = prev.map((chat: ChatHistory) => {
+      // If the chat doesn't exist in prev (new chat scenario), we need to ensure it's there
+      let workingArray = prev;
+      if (!prev.find(c => c.id === activeChatId)) {
+        const newChat: ChatHistory = {
+          id: activeChatId,
+          title: 'New Chat',
+          messages: [],
+          isPrivate: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        workingArray = [newChat, ...prev];
+        if (config.app.debug) {
+          console.log('🔍 Added missing chat to working array');
+        }
+      }
+      
+      const updated = workingArray.map((chat: ChatHistory) => {
         if (chat.id === activeChatId) {
           const updatedChat = {
             ...chat,
@@ -350,13 +356,18 @@ function App() {
               messages count={currentChat?.messages.length || 0}
               {currentChat?.messages && (
                 <div>
-                  Last 3 message IDs: {currentChat.messages.slice(-3).map(m => `${m.role}:${m.id.slice(-4)}`).join(', ')}
+                  Last 5 message IDs: {currentChat.messages.slice(-5).map(m => `${m.role}:${m.id.slice(-4)}`).join(', ')}
+                </div>
+              )}
+              {currentChat?.messages && config.app.debug && (
+                <div>
+                  All message roles: [{currentChat.messages.map(m => m.role).join(', ')}]
                 </div>
               )}
             </div>
           )}
           {currentChat?.messages.map((message, index) => {
-            if (config.app.debug && index >= (currentChat.messages.length - 3)) {
+            if (config.app.debug && index >= (currentChat.messages.length - 5)) {
               console.log(`🔍 Rendering message ${index}:`, message);
             }
             
