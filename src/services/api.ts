@@ -1,5 +1,6 @@
 import { AIProvider, ProviderHealth } from '../types';
 import { config } from '../config';
+import { ServerInfo, checkCompatibility, CompatibilityResult } from '../utils/version';
 
 export class JarvisAPI {
   private static logApiCall(endpoint: string, method: string, data?: any) {
@@ -169,11 +170,75 @@ export class JarvisAPI {
     return defaultStatus;
   }
 
+  static async getServerInfo(): Promise<ServerInfo> {
+    const endpoint = '/';
+    this.logApiCall(endpoint, 'GET');
+
+    try {
+      const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(config.api.timeout),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to get server info`);
+      }
+
+      const data = await response.json();
+      this.logApiResponse(endpoint, true, data);
+      
+      return {
+        version: data.version || 'unknown',
+        name: data.name || 'Jarvis Server',
+        status: data.status || 'unknown',
+        endpoints: data.endpoints || [],
+      };
+    } catch (error) {
+      this.logApiResponse(endpoint, false, null, error);
+      throw error;
+    }
+  }
+
+  static async checkServerCompatibility(): Promise<CompatibilityResult> {
+    try {
+      const serverInfo = await this.getServerInfo();
+      
+      const result = checkCompatibility(
+        serverInfo,
+        config.app.version,
+        config.compatibility.server.minVersion,
+        config.compatibility.server.maxVersion,
+        [...config.compatibility.server.requiredEndpoints]
+      );
+
+      if (config.app.debug) {
+        console.log('🔍 Server compatibility check:', result);
+      }
+
+      return result;
+    } catch (error) {
+      if (config.app.debug) {
+        console.error('❌ Failed to check server compatibility:', error);
+      }
+      
+      return {
+        compatible: false,
+        issues: ['Unable to connect to server or retrieve version information'],
+        clientVersion: config.app.version,
+      };
+    }
+  }
+
   static getApiInfo() {
     return {
       baseUrl: config.api.baseUrl,
       timeout: config.api.timeout,
       healthCheckInterval: config.api.healthCheckInterval,
+      clientVersion: config.app.version,
+      compatibility: config.compatibility,
     };
   }
 }

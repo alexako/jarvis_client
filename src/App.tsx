@@ -4,12 +4,14 @@ import { ChatView } from './components/ChatView';
 import { ChatInput } from './components/ChatInput';
 import { ProviderSelector } from './components/ProviderSelector';
 import { HealthIndicator } from './components/HealthIndicator';
+import { VersionWarning } from './components/VersionWarning';
 import { Sidebar } from './components/Sidebar';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useChat } from './hooks/useChat';
 import { JarvisAPI } from './services/api';
 import { config } from './config';
 import { Message, ChatHistory, AIProvider, ProviderHealth } from './types';
+import { CompatibilityResult } from './utils/version';
 import './styles/globals.scss';
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
   const [providerHealth, setProviderHealth] = useState<ProviderHealth[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 992);
+  const [compatibility, setCompatibility] = useState<CompatibilityResult | null>(null);
+  const [versionWarningDismissed, setVersionWarningDismissed] = useState(false);
   
   const { chatState, addMessage, updateMessage, setLoading, clearMessages, loadMessages } = useChat();
 
@@ -48,6 +52,19 @@ function App() {
       }
     };
 
+    const checkCompatibility = async () => {
+      if (config.app.debug) {
+        console.log('🔍 Checking server compatibility...');
+      }
+      
+      const result = await JarvisAPI.checkServerCompatibility();
+      setCompatibility(result);
+      
+      if (config.app.debug) {
+        console.log('🔗 Compatibility check result:', result);
+      }
+    };
+
     // Log initial API configuration
     if (config.app.debug) {
       console.log('🚀 Jarvis Client starting...', {
@@ -57,7 +74,11 @@ function App() {
       });
     }
 
+    // Initial checks
     checkHealth();
+    checkCompatibility();
+    
+    // Set up health check interval
     const interval = setInterval(checkHealth, config.api.healthCheckInterval);
 
     return () => clearInterval(interval);
@@ -292,6 +313,14 @@ function App() {
             />
           </div>
         </div>
+
+        {compatibility && !compatibility.compatible && !versionWarningDismissed && (
+          <VersionWarning 
+            compatibility={compatibility}
+            onDismiss={() => setVersionWarningDismissed(true)}
+            showOnlyErrors={true}
+          />
+        )}
 
         <ChatView 
           messages={chatState.messages} 

@@ -712,6 +712,115 @@ a {
   }
 }
 
+/* Version Warning */
+.version-warning {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  
+  &__content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  &__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.125rem;
+  }
+  
+  &__checkmark {
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+  
+  &__details {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  &__title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  
+  &__versions {
+    font-size: 0.875rem;
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+  }
+  
+  &__issues {
+    margin: 0.5rem 0;
+  }
+  
+  &__issue {
+    font-size: 0.875rem;
+    margin: 0.25rem 0;
+    line-height: 1.4;
+  }
+  
+  &__recommendation {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    background-color: rgba($orange, 0.1);
+    border-left: 3px solid $orange;
+  }
+  
+  &__close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    @include transition(background-color 0.2s);
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+  
+  &--error {
+    background-color: rgba($red, 0.1);
+    border-color: $red;
+    color: $red-1;
+    
+    .version-warning__icon {
+      color: $red;
+    }
+    
+    .version-warning__close {
+      color: $red-1;
+    }
+  }
+  
+  &--success {
+    background-color: rgba($green, 0.1);
+    border-color: $green;
+    color: $green-1;
+    
+    .version-warning__icon {
+      color: $green;
+    }
+    
+    .version-warning__close {
+      color: $green-1;
+    }
+  }
+}
+
 /* Desktop Layout */
 @include breakpoint(md) {
   .chat {

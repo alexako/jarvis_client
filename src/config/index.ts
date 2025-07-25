@@ -10,8 +10,15 @@ export const config = {
   },
   app: {
     name: 'Jarvis Client',
-    version: '1.0.0',
+    version: '1.2.0',
     debug: isDevelopment,
+  },
+  compatibility: {
+    server: {
+      minVersion: '1.4.0',
+      maxVersion: '1.9.99', // Support through 1.x major version
+      requiredEndpoints: ['/health', '/chat', '/providers', '/status'],
+    },
   },
   storage: {
     keys: {
