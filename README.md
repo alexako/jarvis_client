@@ -42,11 +42,34 @@ cd jarvis-client
 # Install dependencies (grab a coffee, this might take a moment)
 npm install
 
+# Configure your environment
+cp .env.example .env
+# Edit .env with your API key and settings (see Configuration section below)
+
 # Fire up the development server
 npm run dev
 
 # Open your browser to http://localhost:3000 and witness the magic ✨
 ```
+
+### Configuration
+
+Create a `.env` file from the provided template:
+
+```bash
+cp .env.example .env
+```
+
+Configure the following environment variables:
+
+```env
+# API Configuration
+VITE_API_BASE_URL=http://localhost:8000    # Your Jarvis API server URL
+VITE_API_KEY=your-api-key-here             # API key for authentication
+VITE_HOST_HEADER=alexako.com               # Host header for production security
+```
+
+**Important**: Replace `your-api-key-here` with the actual API key from your Jarvis server deployment.
 
 ### Building for Production
 

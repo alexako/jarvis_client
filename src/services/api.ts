@@ -35,6 +35,8 @@ export class JarvisAPI {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.api.apiKey}`,
+          'Host': config.api.hostHeader,
         },
         body: JSON.stringify(requestData),
         signal: AbortSignal.timeout(config.api.timeout),
@@ -67,6 +69,7 @@ export class JarvisAPI {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Host': config.api.hostHeader,
         },
         signal: AbortSignal.timeout(config.api.timeout),
       });
@@ -179,6 +182,7 @@ export class JarvisAPI {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Host': config.api.hostHeader,
         },
         signal: AbortSignal.timeout(config.api.timeout),
       });
@@ -241,6 +245,8 @@ export class JarvisAPI {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.api.apiKey}`,
+          'Host': config.api.hostHeader,
         },
         signal: AbortSignal.timeout(config.api.timeout),
       });
