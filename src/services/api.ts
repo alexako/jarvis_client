@@ -232,6 +232,37 @@ export class JarvisAPI {
     }
   }
 
+  static async getProviders(): Promise<{[key: string]: {name: string, healthy: boolean}}> {
+    const endpoint = '/providers';
+    this.logApiCall(endpoint, 'GET');
+
+    try {
+      const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(config.api.timeout),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to get providers`);
+      }
+
+      const data = await response.json();
+      this.logApiResponse(endpoint, true, data);
+      return data;
+    } catch (error) {
+      this.logApiResponse(endpoint, false, null, error);
+      // Return default providers on error
+      return {
+        anthropic: { name: "Anthropic Claude", healthy: false },
+        deepseek: { name: "DeepSeek", healthy: false },
+        local: { name: "Local AI", healthy: false }
+      };
+    }
+  }
+
   static getApiInfo() {
     return {
       baseUrl: config.api.baseUrl,
