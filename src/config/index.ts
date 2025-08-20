@@ -12,7 +12,7 @@ export const config = {
   },
   app: {
     name: 'Jarvis Client',
-    version: '1.2.0',
+    version: '1.3.0',
     debug: isDevelopment,
   },
   compatibility: {
