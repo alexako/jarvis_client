@@ -48,6 +48,7 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
-    host: true
+    host: true,
+    allowedHosts: ['theserver.tail054cdb.ts.net']
   }
 })
