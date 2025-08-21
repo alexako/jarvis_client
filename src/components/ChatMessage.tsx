@@ -1,6 +1,7 @@
 import React from 'react';
 import { Message } from '../types';
 import { MessageActions } from './MessageActions';
+import { AudioControls } from './AudioControls';
 import { format, isValid } from 'date-fns';
 import { Check, Clock, AlertCircle } from 'lucide-react';
 
@@ -48,8 +49,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     }
   };
 
+  const messageClasses = `message message--${message.role} ${message.status ? `message--${message.status}` : ''}`;
+  
+  // Debug logging for the first message alignment issue
+  if (message.role === 'user' && message.status === 'sending') {
+    console.log('🐛 User message with sending status:', {
+      id: message.id,
+      classes: messageClasses,
+      status: message.status,
+      role: message.role
+    });
+  }
+
   return (
-    <div className={`message message--${message.role} ${message.status ? `message--${message.status}` : ''}`}>
+    <div className={messageClasses}>
       <div className="message__bubble">
         <div className="message__content">{message.content}</div>
         <div className="message__footer">
@@ -57,6 +70,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             {getStatusIcon()}
             {formatMessageTime(message.timestamp)}
           </div>
+          {message.role === 'assistant' && (message.streamUrl || message.audioUrl) && (
+            <AudioControls
+              messageId={message.id}
+              streamUrl={message.streamUrl}
+              audioUrl={message.audioUrl}
+              className="message__audio-controls"
+            />
+          )}
         </div>
       </div>
       {message.role === 'assistant' && message.status !== 'sending' && (

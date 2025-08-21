@@ -1,19 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Volume2, VolumeX } from 'lucide-react';
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, useTts?: boolean, streamAudio?: boolean) => void;
   disabled?: boolean;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = false }) => {
   const [message, setMessage] = useState('');
+  const [useTts, setUseTts] = useState(false);
+  const [streamAudio, setStreamAudio] = useState(true); // Default to streaming for better UX
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() && !disabled) {
-      onSendMessage(message.trim());
+      onSendMessage(message.trim(), useTts, streamAudio);
       setMessage('');
     }
   };
@@ -34,6 +36,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
 
   return (
     <div className="chat-input">
+      <div className="chat-input__controls">
+        <button
+          type="button"
+          className={`chat-input__control-btn ${useTts ? 'chat-input__control-btn--active' : ''}`}
+          onClick={() => setUseTts(!useTts)}
+          title={useTts ? 'Disable audio response' : 'Enable audio response'}
+        >
+          {useTts ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          {useTts && streamAudio && <span className="chat-input__streaming-badge">stream</span>}
+        </button>
+        {useTts && (
+          <button
+            type="button"
+            className={`chat-input__control-btn chat-input__control-btn--small ${streamAudio ? 'chat-input__control-btn--active' : ''}`}
+            onClick={() => setStreamAudio(!streamAudio)}
+            title={streamAudio ? 'Use file-based audio' : 'Use streaming audio'}
+          >
+            {streamAudio ? 'S' : 'F'}
+          </button>
+        )}
+      </div>
       <form onSubmit={handleSubmit} className="chat-input__container">
         <textarea
           ref={textareaRef}

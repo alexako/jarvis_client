@@ -4,6 +4,10 @@ export interface Message {
   role: 'user' | 'assistant';
   timestamp: Date;
   status?: 'sending' | 'sent' | 'delivered' | 'error';
+  audioUrl?: string;
+  streamUrl?: string;
+  isAudioPlaying?: boolean;
+  isAudioLoading?: boolean;
 }
 
 export interface ChatHistory {

@@ -127,7 +127,7 @@ function App() {
     }
   };
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string, useTts: boolean = false, streamAudio: boolean = false) => {
     let activeChatId = currentChatId;
     
     if (!activeChatId) {
@@ -194,17 +194,19 @@ function App() {
         return chat;
       }));
 
-      const response = await JarvisAPI.sendMessage(content, selectedProvider);
+      const apiResponse = await JarvisAPI.sendMessage(content, selectedProvider, useTts, streamAudio);
       
       // Update user message to delivered
       updateMessage(userMessage.id, { status: 'delivered' });
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: response,
+        content: apiResponse.response,
         role: 'assistant',
         timestamp: new Date(),
         status: 'delivered',
+        audioUrl: apiResponse.audioUrl,
+        streamUrl: apiResponse.streamUrl,
       };
 
       // Add assistant message to local chat state

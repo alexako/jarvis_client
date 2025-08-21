@@ -54,6 +54,135 @@ a {
   background: $green-3;
 }
 
+/* Audio Controls */
+.audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+
+  &__button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba($green, 0.1);
+    border: 1px solid rgba($green, 0.3);
+    border-radius: 12px;
+    color: $green;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+
+    &:hover {
+      background: rgba($green, 0.2);
+      border-color: $green;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    &--playing {
+      background: rgba($green, 0.2);
+      border-color: $green;
+    }
+
+    &--error {
+      background: rgba(#ff6b6b, 0.1);
+      border-color: rgba(#ff6b6b, 0.3);
+      color: #ff6b6b;
+    }
+  }
+
+  &__icon {
+    opacity: 0.7;
+  }
+
+  &__error {
+    font-size: 10px;
+    color: #ff6b6b;
+    margin-left: 4px;
+  }
+
+  &__badge {
+    font-size: 10px;
+    background: rgba($green, 0.8);
+    color: $background;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+}
+
+.message__audio-controls {
+  flex-shrink: 0;
+}
+
+.message__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Chat Input Controls */
+.chat-input__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 0 16px;
+
+  @media (max-width: 768px) {
+    padding: 0 12px;
+  }
+}
+
+.chat-input__control-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: rgba($grey, 0.1);
+  border: 1px solid rgba($grey, 0.2);
+  border-radius: 8px;
+  color: $grey;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+
+  &:hover {
+    background: rgba($green, 0.1);
+    border-color: rgba($green, 0.3);
+    color: $green;
+  }
+
+  &--active {
+    background: rgba($green, 0.1);
+    border-color: $green;
+    color: $green;
+  }
+
+  &--small {
+    padding: 4px 6px;
+    min-width: 24px;
+    justify-content: center;
+    font-weight: 600;
+  }
+}
+
+.chat-input__streaming-badge {
+  font-size: 9px;
+  background: $green;
+  color: $background;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-left: 2px;
+}
+
 /* Main Chat Container */
 .chat {
   display: flex;
@@ -151,8 +280,10 @@ a {
   word-wrap: break-word;
 
   &--user {
-    align-self: flex-end;
-    flex-direction: row-reverse;
+    align-self: flex-end !important;
+    flex-direction: row-reverse !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
   }
 
   &--assistant {
@@ -275,6 +406,15 @@ a {
       border-left: 3px solid $red;
     }
   }
+}
+
+/* Ensure user messages stay right-aligned regardless of status */
+.messages .message.message--user.message--sending,
+.messages .message.message--user.message--sent,
+.messages .message.message--user.message--delivered,
+.messages .message.message--user.message--error {
+  align-self: flex-end !important;
+  flex-direction: row-reverse !important;
 }
 
 /* Chat Input */
