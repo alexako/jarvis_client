@@ -4,7 +4,7 @@ const isDevelopment = import.meta.env.DEV;
 export const config = {
   api: {
     baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
-    apiKey: import.meta.env.VITE_API_KEY || 'Z5ssDfzBlPjEianfxQA0rcL58fjE9oR_9jysyFQBpRc',
+    apiKey: import.meta.env.VITE_API_KEY || 'fixed-dev-api-key',
     hostHeader: import.meta.env.VITE_HOST_HEADER || 'alexako.com',
     timeout: 30000,
     retryAttempts: 3,
