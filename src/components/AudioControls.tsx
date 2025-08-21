@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Play, Pause, Loader, Volume2 } from 'lucide-react';
 import { JarvisAPI } from '../services/api';
+import { config } from '../config';
 
 interface AudioControlsProps {
   messageId: string;
@@ -50,7 +51,11 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
       } else if (audioUrl) {
         // Use regular audio file
         const fullUrl = audioUrl.startsWith('/') ? `${JarvisAPI.getApiInfo().baseUrl}${audioUrl}` : audioUrl;
-        const response = await fetch(fullUrl);
+        const response = await fetch(fullUrl, {
+          headers: {
+            'Authorization': `Bearer ${config.api.apiKey}`,
+          }
+        });
         if (!response.ok) {
           throw new Error(`Failed to load audio: ${response.status}`);
         }

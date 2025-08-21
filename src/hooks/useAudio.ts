@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { JarvisAPI } from '../services/api';
+import { config } from '../config';
 
 export interface AudioState {
   isPlaying: boolean;
@@ -41,7 +42,11 @@ export const useAudio = () => {
       } else if (audioUrl) {
         // Use regular audio file
         const fullUrl = audioUrl.startsWith('/') ? `${JarvisAPI.getApiInfo().baseUrl}${audioUrl}` : audioUrl;
-        const response = await fetch(fullUrl);
+        const response = await fetch(fullUrl, {
+          headers: {
+            'Authorization': `Bearer ${config.api.apiKey}`,
+          }
+        });
         if (!response.ok) {
           throw new Error(`Failed to load audio: ${response.status}`);
         }
