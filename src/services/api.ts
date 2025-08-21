@@ -19,12 +19,18 @@ export class JarvisAPI {
     }
   }
 
-  static async sendMessage(text: string, aiProvider: AIProvider): Promise<string> {
+  static async sendMessage(text: string, aiProvider: AIProvider, useTts: boolean = false, streamAudio: boolean = false): Promise<{
+    response: string;
+    audioUrl?: string;
+    streamUrl?: string;
+    requestId: string;
+  }> {
     const endpoint = '/chat';
     const requestData = { 
       text,
       "ai_provider": aiProvider,
-      "use_tts": "false",
+      "use_tts": useTts,
+      "stream_audio": streamAudio,
       "context": {}
     };
 
@@ -51,7 +57,12 @@ export class JarvisAPI {
 
       const data = await response.json();
       this.logApiResponse(endpoint, true, data);
-      return data.response;
+      return {
+        response: data.response,
+        audioUrl: data.audio_url,
+        streamUrl: data.stream_url,
+        requestId: data.request_id
+      };
     } catch (error) {
       this.logApiResponse(endpoint, false, null, error);
       throw error;
@@ -266,6 +277,34 @@ export class JarvisAPI {
         deepseek: { name: "DeepSeek", healthy: false },
         local: { name: "Local AI", healthy: false }
       };
+    }
+  }
+
+  static async streamAudio(streamUrl: string): Promise<Blob> {
+    this.logApiCall(streamUrl, 'GET');
+
+    try {
+      const fullUrl = streamUrl.startsWith('/') ? `${config.api.baseUrl}${streamUrl}` : streamUrl;
+      
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${config.api.apiKey}`,
+          'Host': config.api.hostHeader,
+        },
+        signal: AbortSignal.timeout(30000), // Longer timeout for audio streaming
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to stream audio`);
+      }
+
+      const audioBlob = await response.blob();
+      this.logApiResponse(streamUrl, true, { size: audioBlob.size });
+      return audioBlob;
+    } catch (error) {
+      this.logApiResponse(streamUrl, false, null, error);
+      throw error;
     }
   }
 
