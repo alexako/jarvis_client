@@ -741,6 +741,33 @@ a {
       background-color: rgba($red, 0.1);
     }
   }
+
+  &--live-chat {
+    width: 44px;
+    height: 44px;
+    padding: 0.5rem;
+    background-color: transparent;
+    color: $lightGrey;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+
+    &:hover {
+      background-color: rgba($green, 0.1);
+      color: $green;
+      border-color: rgba($green, 0.3);
+    }
+
+    &--active {
+      background-color: $green;
+      color: $background;
+      border-color: $green;
+
+      &:hover {
+        background-color: $green-3;
+        border-color: $green-3;
+      }
+    }
+  }
 }
 
 .chat-item:hover .btn--delete {
@@ -958,6 +985,347 @@ a {
     .version-warning__close {
       color: $green-1;
     }
+  }
+}
+
+/* Live Chat */
+.live-chat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  
+  &__call-button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  &__call-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, $green, $green-3);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 120px;
+    height: 120px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba($green, 0.3);
+    
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 15px 40px rgba($green, 0.4);
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+  
+  &__calling {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    text-align: center;
+  }
+  
+  &__avatar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &-image {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, $darkGrey-2, $darkGrey);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      position: relative;
+      z-index: 2;
+      
+      &--connected {
+        background: linear-gradient(135deg, $green, $green-3);
+        box-shadow: 0 0 30px rgba($green, 0.3);
+      }
+      
+      &--ended {
+        background: linear-gradient(135deg, $red, $red-1);
+        opacity: 0.7;
+      }
+    }
+  }
+  
+  &__calling-animation {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    pointer-events: none;
+  }
+  
+  &__ring {
+    position: absolute;
+    border: 2px solid $green;
+    border-radius: 50%;
+    opacity: 0;
+    animation: ring-pulse 2s infinite;
+    
+    &:nth-child(1) {
+      width: 140px;
+      height: 140px;
+      top: 30px;
+      left: 30px;
+      animation-delay: 0s;
+    }
+    
+    &:nth-child(2) {
+      width: 160px;
+      height: 160px;
+      top: 20px;
+      left: 20px;
+      animation-delay: 0.5s;
+    }
+    
+    &:nth-child(3) {
+      width: 180px;
+      height: 180px;
+      top: 10px;
+      left: 10px;
+      animation-delay: 1s;
+    }
+  }
+  
+  &__status-indicator {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    background: $green;
+    border: 3px solid $background;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  
+  &__calling-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $lightGrey;
+    margin: 0;
+  }
+  
+  &__calling-subtitle {
+    font-size: 1rem;
+    color: $grey;
+    margin: 0;
+  }
+  
+  &__connected {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  &__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  &__call-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: $lightGrey;
+      margin: 0;
+    }
+  }
+  
+  &__duration {
+    font-size: 1rem;
+    color: $green;
+    font-weight: 600;
+    font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', Consolas, 'Courier New', monospace;
+  }
+  
+  &__content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  &__visualizer {
+    width: 100%;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($darkGrey-2, 0.5);
+    border-radius: 1rem;
+    padding: 1rem;
+  }
+  
+  &__waveform {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    height: 60px;
+  }
+  
+  &__wave {
+    width: 4px;
+    background: $green;
+    border-radius: 2px;
+    animation: wave-pulse 1.5s infinite ease-in-out;
+    
+    &:nth-child(1) { animation-delay: 0s; }
+    &:nth-child(2) { animation-delay: 0.3s; }
+    &:nth-child(3) { animation-delay: 0.6s; }
+    &:nth-child(4) { animation-delay: 0.3s; }
+    &:nth-child(5) { animation-delay: 0s; }
+  }
+  
+  &__controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+  }
+  
+  &__calling-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  
+  &__control-button {
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: $darkGrey-2;
+    color: $lightGrey;
+    
+    &:hover {
+      transform: scale(1.1);
+      background: $darkGrey;
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+    
+    &--active {
+      background: $red;
+      color: white;
+    }
+    
+    &--end {
+      background: $red;
+      color: white;
+      
+      &:hover {
+        background: $red-1;
+        transform: scale(1.1);
+      }
+    }
+  }
+  
+  &__ended {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+    
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: $lightGrey;
+      margin: 0;
+    }
+    
+    p {
+      color: $grey;
+      margin: 0;
+    }
+  }
+}
+
+/* Live Chat Animations */
+@keyframes ring-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes wave-pulse {
+  0%, 100% {
+    height: 20px;
+    opacity: 0.7;
+  }
+  50% {
+    height: 60px;
+    opacity: 1;
   }
 }
 
