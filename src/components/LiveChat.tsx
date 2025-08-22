@@ -87,24 +87,29 @@ export const LiveChat: React.FC<LiveChatProps> = ({
       // Simulate realistic connection delay (ringing state)
       await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
 
-      // Check if call was cancelled during connection
-      if (callState === 'calling') {
-        setCallState('connected');
-        setIsConnecting(false);
-        startCallTimer();
+      // Transition to connected state
+      setCallState('connected');
+      setIsConnecting(false);
+      startCallTimer();
 
-        // Send initial greeting through API
-        try {
-          await JarvisAPI.sendMessage(
-            "Hello Jarvis, I'm starting a live chat session.", 
-            selectedProvider, 
-            true, // use TTS
-            true  // stream audio
-          );
-        } catch (apiError) {
-          console.warn('Failed to send initial greeting:', apiError);
-          // Continue with call even if greeting fails
+      // Send initial greeting through API to get Jarvis response
+      try {
+        const response = await JarvisAPI.sendMessage(
+          "Hello Jarvis, I've just connected to you via live chat. Please greet me in your typical Jarvis style.", 
+          selectedProvider, 
+          true, // use TTS
+          true  // stream audio
+        );
+        
+        // If we get an audio response, play it automatically
+        if (response.audioUrl || response.streamUrl) {
+          console.log('🎵 Playing Jarvis greeting audio');
+          // You could integrate with the existing audio system here
+          // For now, just log that we received the greeting
         }
+      } catch (apiError) {
+        console.warn('Failed to send initial greeting:', apiError);
+        // Continue with call even if greeting fails
       }
 
     } catch (error) {
@@ -286,6 +291,11 @@ export const LiveChat: React.FC<LiveChatProps> = ({
       <p>Duration: {formatDuration(callDuration)}</p>
     </div>
   );
+
+  // Debug logging for state changes
+  if (selectedProvider && console.log) {
+    console.log(`🔗 LiveChat state: ${callState}, connecting: ${isConnecting}, provider: ${selectedProvider}`);
+  }
 
   return (
     <div className="live-chat">
