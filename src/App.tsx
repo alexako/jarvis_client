@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Phone } from 'lucide-react';
 import { ChatView } from './components/ChatView';
 import { ChatInput } from './components/ChatInput';
 import { ProviderSelector } from './components/ProviderSelector';
 import { HealthIndicator } from './components/HealthIndicator';
 import { VersionWarning } from './components/VersionWarning';
 import { Sidebar } from './components/Sidebar';
+import { LiveChat } from './components/LiveChat';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useChat } from './hooks/useChat';
 import { JarvisAPI } from './services/api';
@@ -23,6 +24,7 @@ function App() {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 992);
   const [compatibility, setCompatibility] = useState<CompatibilityResult | null>(null);
   const [versionWarningDismissed, setVersionWarningDismissed] = useState(false);
+  const [isLiveChatMode, setIsLiveChatMode] = useState(false);
   
   const { chatState, addMessage, updateMessage, setLoading, clearMessages, loadMessages } = useChat();
 
@@ -301,6 +303,13 @@ function App() {
           </div>
           
           <div className="header__right">
+            <button 
+              className={`btn btn--live-chat ${isLiveChatMode ? 'btn--live-chat--active' : ''}`}
+              onClick={() => setIsLiveChatMode(!isLiveChatMode)}
+              title={isLiveChatMode ? 'Switch to chat mode' : 'Switch to live chat mode'}
+            >
+              <Phone size={16} />
+            </button>
             <ProviderSelector
               selectedProvider={selectedProvider}
               providerHealth={providerHealth}
@@ -324,12 +333,20 @@ function App() {
           />
         )}
 
-        <ChatView 
-          messages={chatState.messages} 
-          isLoading={chatState.isLoading} 
-        />
-
-        <ChatInput onSendMessage={sendMessage} disabled={chatState.isLoading} />
+        {isLiveChatMode ? (
+          <LiveChat 
+            selectedProvider={selectedProvider}
+            onCallEnd={() => setIsLiveChatMode(false)}
+          />
+        ) : (
+          <>
+            <ChatView 
+              messages={chatState.messages} 
+              isLoading={chatState.isLoading} 
+            />
+            <ChatInput onSendMessage={sendMessage} disabled={chatState.isLoading} />
+          </>
+        )}
       </div>
     </div>
   );
