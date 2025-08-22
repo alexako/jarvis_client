@@ -37,6 +37,7 @@ export const LiveChat: React.FC<LiveChatProps> = ({
   const audioStreamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout>();
+  const ringingAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Format call duration for display
   const formatDuration = (seconds: number): string => {
@@ -147,6 +148,53 @@ export const LiveChat: React.FC<LiveChatProps> = ({
     }, 1500); // 1.5 second pause before sending
   };
 
+  // Create and play ringing sound
+  const playRingingSound = () => {
+    // Create a simple ringing tone using Web Audio API
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Ring tone frequencies (similar to traditional phone ring)
+    oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4
+    oscillator.frequency.setValueAtTime(480, audioContext.currentTime + 0.5); // A4#
+    
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    
+    // Create repeating ring pattern
+    const ringDuration = 1.5; // 1.5 seconds ring
+    const pauseDuration = 0.5; // 0.5 seconds pause
+    
+    oscillator.start();
+    
+    // Stop after a reasonable time or when call connects
+    setTimeout(() => {
+      try {
+        oscillator.stop();
+        audioContext.close();
+      } catch (error) {
+        console.warn('Error stopping ringing sound:', error);
+      }
+    }, 8000); // Stop after 8 seconds max
+    
+    return { oscillator, audioContext };
+  };
+
+  // Stop ringing sound
+  const stopRingingSound = () => {
+    if (ringingAudioRef.current) {
+      try {
+        ringingAudioRef.current.pause();
+        ringingAudioRef.current = null;
+      } catch (error) {
+        console.warn('Error stopping ringing sound:', error);
+      }
+    }
+  };
+
   // Send transcript to Jarvis
   const sendTranscriptToJarvis = async (transcript: string) => {
     if (!transcript.trim()) return;
@@ -249,8 +297,22 @@ export const LiveChat: React.FC<LiveChatProps> = ({
         // Continue anyway - health check failure doesn't mean the API is down
       }
 
+      // Start ringing sound
+      const ringingSound = playRingingSound();
+      console.log('📞 Playing ringing sound...');
+
       // Simulate realistic connection delay (ringing state)
       await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
+
+      // Stop ringing sound when connection is established
+      if (ringingSound) {
+        try {
+          ringingSound.oscillator.stop();
+          ringingSound.audioContext.close();
+        } catch (error) {
+          console.warn('Error stopping ringing sound:', error);
+        }
+      }
 
       // Transition to connected state
       setCallState('connected');
@@ -294,6 +356,7 @@ export const LiveChat: React.FC<LiveChatProps> = ({
       console.error('Failed to initialize call:', error);
       setCallState('idle');
       setIsConnecting(false);
+      stopRingingSound(); // Stop ringing on error
       
       // More specific error messages
       if (error instanceof Error) {
@@ -314,6 +377,7 @@ export const LiveChat: React.FC<LiveChatProps> = ({
   const endCall = () => {
     setCallState('ended');
     stopCallTimer();
+    stopRingingSound(); // Stop ringing if still playing
     
     // Stop speech recognition
     if (recognitionRef.current) {
@@ -390,6 +454,7 @@ export const LiveChat: React.FC<LiveChatProps> = ({
   useEffect(() => {
     return () => {
       stopCallTimer();
+      stopRingingSound();
       if (audioStreamRef.current) {
         audioStreamRef.current.getTracks().forEach(track => track.stop());
       }
