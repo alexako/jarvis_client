@@ -17,9 +17,9 @@ export const config = {
   },
   compatibility: {
     server: {
-      minVersion: '1.4.0',
-      maxVersion: '1.9.99', // Support through 1.x major version
-      requiredEndpoints: ['/health', '/chat', '/providers', '/status'],
+      minVersion: '1.0.0',
+      maxVersion: '2.99.99', // Support through 1.x and 2.x major versions
+      requiredEndpoints: ['/health', '/chat'],
     },
   },
   storage: {

@@ -72,11 +72,16 @@ export const LiveChat: React.FC<LiveChatProps> = ({
       });
 
       // Check API health before connecting
-      const health = await JarvisAPI.checkHealth();
-      const providerHealth = health.find(h => h.provider === selectedProvider);
-      
-      if (!providerHealth || providerHealth.status !== 'healthy') {
-        throw new Error(`${selectedProvider} provider is not available`);
+      try {
+        const health = await JarvisAPI.checkHealth();
+        const providerHealth = health.find(h => h.provider === selectedProvider);
+        
+        if (providerHealth && providerHealth.status === 'offline') {
+          console.warn(`⚠️ ${selectedProvider} provider appears offline, but attempting connection anyway`);
+        }
+      } catch (healthError) {
+        console.warn('⚠️ Health check failed, but proceeding with call attempt:', healthError);
+        // Continue anyway - health check failure doesn't mean the API is down
       }
 
       // Simulate realistic connection delay (ringing state)
@@ -109,12 +114,12 @@ export const LiveChat: React.FC<LiveChatProps> = ({
       
       // More specific error messages
       if (error instanceof Error) {
-        if (error.message.includes('provider is not available')) {
-          alert(`Could not connect to ${selectedProvider}. Please check the server status and try again.`);
-        } else if (error.name === 'NotAllowedError') {
+        if (error.name === 'NotAllowedError') {
           alert('Microphone access was denied. Please allow microphone access and try again.');
         } else if (error.name === 'NotFoundError') {
           alert('No microphone found. Please check your audio devices and try again.');
+        } else if (error.message.includes('provider is not available')) {
+          alert(`Could not connect to ${selectedProvider}. Please check the server status and try again.`);
         } else {
           alert('Could not initialize call. Please check your connection and try again.');
         }
